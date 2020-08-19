@@ -1,0 +1,39 @@
+name: Go
+
+on: [push, pull_request]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        go: [ '1.11.13', '1.12.17', '1.13.15', '1.14.7', '1.15' ]
+    steps:
+
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
+    - name: Get Build Tools
+      run: |
+        go get github.com/mattn/goveralls
+        go get golang.org/x/tools/cmd/cover
+
+    - name: Add $GOPATH/bin to $PATH
+      run: |
+        echo "::add-path::$(go env GOPATH)/bin"
+
+    - uses: actions/checkout@v2
+
+    - run: goveralls -repotoken 3qJVUE0iQwqnCbmNcDsjYu1nh4J4KIFXx -parallel
+    - run: go test -race -v . -tags ""
+    - run: go test -race -v . -tags "libsqlite3"
+    - run: go test -race -v . -tags "sqlite_allow_uri_authority sqlite_app_armor sqlite_foreign_keys sqlite_fts5 sqlite_icu sqlite_introspect sqlite_json sqlite_preupdate_hook sqlite_secure_delete sqlite_see sqlite_stat4 sqlite_trace sqlite_userauth sqlite_vacuum_incr sqlite_vtable sqlite_unlock_notify"
+    - run: go test -race -v . -tags "sqlite_vacuum_full"
+    - run: goveralls -repotoken 3qJVUE0iQwqnCbmNcDsjYu1nh4J4KIFXx -parallel-finish
+
+# based on: github.com/koron-go/_skeleton/.github/workflows/go.yml
